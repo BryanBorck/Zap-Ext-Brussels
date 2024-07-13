@@ -23,15 +23,15 @@ export const useNotarize = () => {
 
   const notarize = async (req: any, onFinalize: (req: any) => void) => {
     if (!req) {
-      console.log('Request is null');
+      //console.log('Request is null');
       return;
     }
 
-    console.log(`Starting notarization for request: ${req.requestId}`);
+    //console.log(`Starting notarization for request: ${req.requestId}`);
     currentlyNotarizing = req.requestId;
 
     const hostname = urlify(req.url)?.hostname;
-    console.log('Hostname:', hostname);
+    //console.log('Hostname:', hostname);
     const notaryUrl = await getNotaryApi();
     const websocketProxyUrl = await getProxyApi();
     const maxSentData = await getMaxSent();
@@ -66,8 +66,8 @@ export const useNotarize = () => {
         }),
       );
 
-      console.log(`Notarized request: ${req.requestId}`);
-      console.log('REQUEST RESPONSE', result);
+      //console.log(`Notarized request: ${req.requestId}`);
+      //console.log('REQUEST RESPONSE', result);
       notarizedRequestIds.add(req.requestId);
       lastProcessedTime = Date.now();
       onFinalize(req); // Call the callback to update the finalized request
@@ -83,33 +83,33 @@ export const useNotarize = () => {
     allRequests: any[],
     onFinalize: (req: any) => void,
   ) => {
-    console.log('Checking queue for next request to process');
-    console.log(`Current queue length: ${requestQueue.length}`);
-    console.log(
-      `Processing status: ${processing ? 'Processing' : 'Not processing'}`,
-    );
-    console.log(`Time since last process: ${Date.now() - lastProcessedTime}ms`);
+    //console.log('Checking queue for next request to process');
+    //console.log(`Current queue length: ${requestQueue.length}`);
+    //console.log(
+    //   `Processing status: ${processing ? 'Processing' : 'Not processing'}`,
+    // );
+    //console.log(`Time since last process: ${Date.now() - lastProcessedTime}ms`);
 
     if (processing || requestQueue.length === 0) {
-      console.log(
-        'Exiting processNextInQueue: Already processing or queue is empty',
-      );
+      //console.log(
+      //   'Exiting processNextInQueue: Already processing or queue is empty',
+      // );
       return;
     }
 
     const currentTime = Date.now();
     if (currentTime - lastProcessedTime < DELAY_BETWEEN_REQUESTS) {
-      console.log(
-        `Waiting for delay. Time remaining: ${
-          DELAY_BETWEEN_REQUESTS - (currentTime - lastProcessedTime)
-        }ms`,
-      );
+      //console.log(
+      //   `Waiting for delay. Time remaining: ${
+      //     DELAY_BETWEEN_REQUESTS - (currentTime - lastProcessedTime)
+      //   }ms`,
+      // );
       return;
     }
 
     processing = true;
     const nextRequestId = requestQueue[0];
-    console.log(`Attempting to process request: ${nextRequestId}`);
+    //console.log(`Attempting to process request: ${nextRequestId}`);
     const nextRequest = allRequests.find(
       (req) => req.requestId === nextRequestId,
     );
@@ -118,13 +118,13 @@ export const useNotarize = () => {
       await notarize(nextRequest, onFinalize);
       requestQueue = requestQueue.slice(1);
     } else {
-      console.log(`Request ${nextRequestId} not found in allRequests`);
+      //console.log(`Request ${nextRequestId} not found in allRequests`);
       processing = false;
     }
   };
 
   const addRequestsToQueue = (allRequests: any[]) => {
-    console.log('Checking for new requests to add to queue');
+    //console.log('Checking for new requests to add to queue');
     const newRequestIds = allRequests
       .filter(
         (req) =>
@@ -134,7 +134,7 @@ export const useNotarize = () => {
       .map((req) => req.requestId);
 
     if (newRequestIds.length > 0) {
-      console.log(`Adding ${newRequestIds.length} new requests to queue`);
+      //console.log(`Adding ${newRequestIds.length} new requests to queue`);
       requestQueue = [...requestQueue, ...newRequestIds];
     }
   };
@@ -143,7 +143,7 @@ export const useNotarize = () => {
     allRequests: any[],
     onFinalize: (req: any) => void,
   ) => {
-    console.log('Setting up interval for queue processing');
+    //console.log('Setting up interval for queue processing');
     const intervalId = setInterval(() => {
       processNextInQueue(allRequests, onFinalize);
     }, QUEUE_CHECK_INTERVAL);
@@ -152,7 +152,7 @@ export const useNotarize = () => {
     processNextInQueue(allRequests, onFinalize);
 
     return () => {
-      console.log('Clearing interval for queue processing');
+      //console.log('Clearing interval for queue processing');
       clearInterval(intervalId);
     };
   };

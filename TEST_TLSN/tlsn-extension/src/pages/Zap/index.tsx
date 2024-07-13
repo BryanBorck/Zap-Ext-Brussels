@@ -7,11 +7,69 @@ import { useDispatch } from 'react-redux';
 import classNames from 'classnames';
 import { urlify } from '../../utils/misc';
 import { getNotaryApi, getProxyApi } from '../../utils/storage';
+import { getDataFromBlockHash } from '../../utils/availUtils';
+import { H256 } from '@polkadot/types/interfaces';
+import { hexToU8a } from '@polkadot/util';
+import { TypeRegistry } from '@polkadot/types';
+
+let registry = new TypeRegistry();
+
+// Function to convert hexadecimal string to H256
+function hexStringToH256(hexString: string): H256 {
+  if (hexString.length !== 66 || !hexString.startsWith('0x')) {
+    throw new Error('Invalid hex string format for H256');
+  }
+
+  return registry.createType('H256', hexToU8a(hexString));
+}
+
+// Separate IV and encrypted data
+function separateIvAndData(combinedData: Uint8Array): [Uint8Array, Uint8Array] {
+  const iv = combinedData.slice(0, 12); // AES-GCM typically uses a 12-byte IV
+  const encryptedData = combinedData.slice(12);
+  return [iv, encryptedData];
+}
+
+export async function generateConsistentKey(
+  seed: string = 'YourConstantSeedHere',
+) {
+  // Convert the seed string to an ArrayBuffer
+  const encoder = new TextEncoder();
+  const seedBuffer = encoder.encode(seed);
+
+  // Use the seed to create a key
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    seedBuffer,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits', 'deriveKey'],
+  );
+
+  // Derive the actual key using PBKDF2
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: new Uint8Array(16), // You should use a consistent salt
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+
+  return key;
+}
 
 const ExampleComponent: React.FC = () => {
   const allRequests = useRequests() || [];
   const { addRequestsToQueue, startQueueProcessing } = useNotarize();
   const [finalizedRequests, setFinalizedRequests] = useState<any[]>([]);
+  const [blockData, setBlockData] = useState<string | null>(null);
+  const [decryptedData, setDecryptedData] = useState<string | null>(null);
+  const [decryptionKey, setDecryptionKey] = useState<string>('');
 
   const handleFinalize = (req: any) => {
     setFinalizedRequests((prev) => [...prev, req]);
@@ -29,11 +87,111 @@ const ExampleComponent: React.FC = () => {
     };
   }, [allRequests]);
 
+  const handleGetDataFromBlockHash = async () => {
+    const txHash =
+      '0x1cb2443525c559de4cd102e1463588f0f414b5785baaaf23988643b49f4be448';
+    const blockHash =
+      '0x885e344aa5cc6be5dbee059c6f6d38111ac66eaccf44da761bae43f6d8d9d2f1';
+
+    try {
+      const data = await getDataFromBlockHash(
+        blockHash,
+        hexStringToH256(txHash),
+      );
+
+      console.log('Block Data', data);
+      setBlockData(data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setBlockData('Error fetching data');
+    }
+  };
+
+  // async function decryptData(iv: Uint8Array, encryptedData: Uint8Array) {
+  //   let key = await generateConsistentKey(); // Ensure this uses the same seed as encryption
+  //   try {
+  //     const decryptedData = await crypto.subtle.decrypt(
+  //       {
+  //         name: 'AES-GCM',
+  //         iv: iv,
+  //       },
+  //       key,
+  //       encryptedData,
+  //     );
+
+  //     const decoder = new TextDecoder();
+  //     return decoder.decode(decryptedData);
+  //   } catch (error) {
+  //     console.error('Decryption error:', error);
+  //     throw error;
+  //   }
+  // }
+
+  // const handleDecrypt = async () => {
+  //   if (!blockData) {
+  //     alert('Please fetch block data first');
+  //     return;
+  //   }
+
+  //   try {
+  //     // Convert hex string to Uint8Array
+  //     const combinedData = hexToU8a(blockData);
+
+  //     // Separate IV and encrypted data
+  //     const [iv, encryptedData] = separateIvAndData(combinedData);
+
+  //     // Decrypt the data
+  //     const decrypted = await decryptData(iv, encryptedData);
+  //     console.log('Decrypted Data', decrypted);
+  //     setDecryptedData(decrypted);
+  //   } catch (error) {
+  //     console.error('Error decrypting data:', error);
+  //     // setDecryptedData('Error decrypting data: ' + error?.message);
+  //   }
+  // };
+
   return (
     <div className="flex flex-col flex-nowrap flex-grow h-full">
       <div className="flex flex-row flex-nowrap bg-gray-100 py-4 px-4 gap-2">
         <p>Example Test Area</p>
+        <button
+          onClick={handleGetDataFromBlockHash}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Get Block Data
+        </button>
+        {/* <input
+          type="password"
+          placeholder="Enter decryption key"
+          value={decryptionKey}
+          onChange={(e) => setDecryptionKey(e.target.value)}
+          className="border rounded px-2 py-1"
+        /> */}
+        {/* <button
+          onClick={handleDecrypt}
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Decrypt Data
+        </button> */}
       </div>
+      {blockData && (
+        <div
+          className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
+          <strong className="font-bold">Block Data: </strong>
+          <span className="block sm:inline">{blockData}</span>
+        </div>
+      )}
+      {decryptedData && (
+        <div
+          className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mt-2"
+          role="alert"
+        >
+          <strong className="font-bold">Decrypted Data: </strong>
+          <span className="block sm:inline">{decryptedData}</span>
+        </div>
+      )}
       <div className="flex-grow overflow-y-auto">
         <div className="flex flex-col gap-2 p-4">
           {allRequests.map((request, index) => (
