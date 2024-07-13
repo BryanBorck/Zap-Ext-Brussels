@@ -19,7 +19,9 @@ export const onSendHeaders = (
       const existing = cache.get<RequestLog>(requestId);
       const { hostname } = urlify(details.url) || {};
 
-      const twitterTestRegex = new RegExp('https://x.com/i/api/1.1/dm/\\S+');
+      const twitterTestRegex = new RegExp(
+        'https://x.com/i/api/1.1/dm/user_updates.json',
+      );
 
       if (twitterTestRegex.test(details.url)) {
         // DANILO: setar no cache apenas os request com a Regex do Twitter
@@ -102,7 +104,9 @@ export const onResponseStarted = (
 
     const existing = cache.get<RequestLog>(requestId);
 
-    const twitterTestRegex = new RegExp('https://x.com/i/api/1.1/dm/\\S+');
+    const twitterTestRegex = new RegExp(
+      'https://x.com/i/api/1.1/dm/user_updates.json',
+    );
 
     if (twitterTestRegex.test(details.url)) {
       // DANILO: setar no cache apenas os request com a Regex do Twitter
