@@ -5,8 +5,7 @@ import browser from 'webextension-polyfill';
 import { addRequest } from '../../reducers/requests';
 import { urlify } from '../../utils/misc';
 import { setCookies, setHeaders } from './db';
-
-// DANILO: Aqui ele basicamente seta os requests no cache e envia no log de requests
+// import { addRequestsToQueue, startQueueProcessing } from './notarizeUtils';
 
 export const onSendHeaders = (
   details: browser.WebRequest.OnSendHeadersDetailsType,
@@ -24,8 +23,6 @@ export const onSendHeaders = (
       );
 
       if (twitterTestRegex.test(details.url)) {
-        // DANILO: setar no cache apenas os request com a Regex do Twitter
-
         console.log('Twitter DM Request', details);
 
         if (hostname && details.requestHeaders) {
@@ -44,7 +41,7 @@ export const onSendHeaders = (
           });
         }
 
-        cache.set(requestId, {
+        const newLog: RequestLog = {
           ...existing,
           method: details.method as 'GET' | 'POST',
           type: details.type,
@@ -53,7 +50,15 @@ export const onSendHeaders = (
           requestHeaders: details.requestHeaders || [],
           tabId: tabId,
           requestId: requestId,
-        });
+        };
+
+        cache.set(requestId, newLog);
+
+        console.log('After Cache Set');
+
+        // Add the new request to the queue and start processing
+        // addRequestsToQueue([newLog]);
+        // startQueueProcessing([newLog]);
       }
     }
   });
@@ -109,8 +114,6 @@ export const onResponseStarted = (
     );
 
     if (twitterTestRegex.test(details.url)) {
-      // DANILO: setar no cache apenas os request com a Regex do Twitter
-
       const newLog: RequestLog = {
         requestHeaders: [],
         ...existing,

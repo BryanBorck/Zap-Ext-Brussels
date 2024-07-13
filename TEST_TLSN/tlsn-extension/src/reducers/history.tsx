@@ -31,6 +31,12 @@ const initialState: State = {
 };
 
 export const addRequestHistory = (request?: RequestHistory | null) => {
+  console.log('Adding data to HISTORY');
+  console.log('Full Request', request);
+  if (request?.status == 'success') {
+    console.log('Proof', request?.proof);
+  }
+
   return {
     type: ActionType['/history/addRequest'],
     payload: request,

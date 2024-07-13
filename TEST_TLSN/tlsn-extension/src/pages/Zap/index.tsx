@@ -1,205 +1,134 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useEffect,
-  useState,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useRequests } from '../../reducers/requests';
+import { useNotarize } from './notarizeUtils';
 import { useNavigate } from 'react-router';
-import {
-  notarizeRequest,
-  useRequest,
-  useRequests,
-} from '../../reducers/requests';
+import { BackgroundActiontype } from '../../entries/Background/rpc';
 import { useDispatch } from 'react-redux';
-import {
-  getNotaryApi,
-  getProxyApi,
-  getMaxSent,
-  getMaxRecv,
-} from '../../utils/storage';
+import classNames from 'classnames';
 import { urlify } from '../../utils/misc';
+import { getNotaryApi, getProxyApi } from '../../utils/storage';
 
-const maxTranscriptSize = 16384;
-const DELAY_BETWEEN_REQUESTS = 30000; // 30 seconds in milliseconds
-const QUEUE_CHECK_INTERVAL = 5000; // 5 seconds
-
-export default function Zap(): ReactElement {
-  console.log('Zap component rendered');
-  const navigate = useNavigate();
+const ExampleComponent: React.FC = () => {
   const allRequests = useRequests() || [];
-  const dispatch = useDispatch();
-  const [notarizedRequestIds, setNotarizedRequestIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [currentlyNotarizing, setCurrentlyNotarizing] = useState<string | null>(
-    null,
-  );
-  const [requestQueue, setRequestQueue] = useState<string[]>([]);
-  const lastProcessedTime = useRef<number>(0);
-  const processingRef = useRef<boolean>(false);
+  const { addRequestsToQueue, startQueueProcessing } = useNotarize();
+  const [finalizedRequests, setFinalizedRequests] = useState<any[]>([]);
 
-  const notarize = useCallback(
-    async (req: any) => {
-      if (!req) {
-        console.log('Request is null');
-        return;
-      }
-
-      console.log(`Starting notarization for request: ${req.requestId}`);
-      setCurrentlyNotarizing(req.requestId);
-
-      const hostname = urlify(req.url)?.hostname;
-      console.log('Hostname:', hostname);
-      const notaryUrl = await getNotaryApi();
-      const websocketProxyUrl = await getProxyApi();
-      const maxSentData = await getMaxSent();
-      const maxRecvData = await getMaxRecv();
-
-      const headers: { [k: string]: string } = (
-        req.requestHeaders || []
-      ).reduce(
-        (acc: any, h: any) => {
-          acc[h.name] = h.value;
-          return acc;
-        },
-        { Host: hostname },
-      );
-
-      headers['Accept-Encoding'] = 'identity';
-      headers['Connection'] = 'close';
-
-      try {
-        await dispatch(
-          // @ts-ignore
-          notarizeRequest({
-            url: req.url,
-            method: req.method,
-            headers,
-            body: req.requestBody,
-            maxSentData,
-            maxRecvData,
-            maxTranscriptSize,
-            notaryUrl,
-            websocketProxyUrl,
-            secretHeaders: [],
-            secretResps: [],
-          }),
-        );
-
-        console.log(`Notarized request: ${req.requestId}`);
-        setNotarizedRequestIds((prev) => new Set(prev).add(req.requestId));
-        lastProcessedTime.current = Date.now();
-      } catch (error) {
-        console.error(`Error notarizing request ${req.requestId}:`, error);
-      } finally {
-        setCurrentlyNotarizing(null);
-        processingRef.current = false;
-      }
-    },
-    [dispatch],
-  );
-
-  const processNextInQueue = useCallback(async () => {
-    console.log('Checking queue for next request to process');
-    console.log(`Current queue length: ${requestQueue.length}`);
-    console.log(
-      `Processing status: ${processingRef.current ? 'Processing' : 'Not processing'}`,
-    );
-    console.log(
-      `Time since last process: ${Date.now() - lastProcessedTime.current}ms`,
-    );
-
-    if (processingRef.current || requestQueue.length === 0) {
-      console.log(
-        'Exiting processNextInQueue: Already processing or queue is empty',
-      );
-      return;
-    }
-
-    const currentTime = Date.now();
-    if (currentTime - lastProcessedTime.current < DELAY_BETWEEN_REQUESTS) {
-      console.log(
-        `Waiting for delay. Time remaining: ${DELAY_BETWEEN_REQUESTS - (currentTime - lastProcessedTime.current)}ms`,
-      );
-      return;
-    }
-
-    processingRef.current = true;
-    const nextRequestId = requestQueue[0];
-    console.log(`Attempting to process request: ${nextRequestId}`);
-    const nextRequest = allRequests.find(
-      (req) => req.requestId === nextRequestId,
-    );
-
-    if (nextRequest) {
-      await notarize(nextRequest);
-      setRequestQueue((prev) => prev.slice(1));
-    } else {
-      console.log(`Request ${nextRequestId} not found in allRequests`);
-      processingRef.current = false;
-    }
-  }, [allRequests, notarize, requestQueue]);
+  const handleFinalize = (req: any) => {
+    setFinalizedRequests((prev) => [...prev, req]);
+  };
 
   useEffect(() => {
-    console.log('Checking for new requests to add to queue');
-    const newRequestIds = allRequests
-      .filter(
-        (req) =>
-          !notarizedRequestIds.has(req.requestId) &&
-          !requestQueue.includes(req.requestId),
-      )
-      .map((req) => req.requestId);
-
-    if (newRequestIds.length > 0) {
-      console.log(`Adding ${newRequestIds.length} new requests to queue`);
-      setRequestQueue((prev) => [...prev, ...newRequestIds]);
-    }
-  }, [allRequests, notarizedRequestIds, requestQueue]);
+    addRequestsToQueue(allRequests);
+  }, [allRequests]);
 
   useEffect(() => {
-    console.log('Setting up interval for queue processing');
-    const intervalId = setInterval(() => {
-      processNextInQueue();
-    }, QUEUE_CHECK_INTERVAL);
-
-    // Immediate first run
-    processNextInQueue();
+    const clearProcessing = startQueueProcessing(allRequests, handleFinalize);
 
     return () => {
-      console.log('Clearing interval for queue processing');
-      clearInterval(intervalId);
+      clearProcessing();
     };
-  }, [processNextInQueue]);
+  }, [allRequests]);
 
-  console.log('Rendering Zap component');
   return (
-    <div className="flex flex-col flex-nowrap flex-grow">
+    <div className="flex flex-col flex-nowrap flex-grow h-full">
       <div className="flex flex-row flex-nowrap bg-gray-100 py-4 px-4 gap-2">
-        <p>Zap Test Area</p>
+        <p>Example Test Area</p>
       </div>
-      <div className="flex flex-col gap-2 flex-nowrap overflow-y-auto p-4">
-        {allRequests.map((request, index) => (
-          <div
-            key={index}
-            className="truncate flex flex-row w-full py-1 px-4 flex-nowrap border-transparent shadow-md border-[2px] rounded-md p-2 hover:bg-gray-100 hover:border-gray-400 cursor-pointer transition-all duration-500 ease-in-out"
-          >
-            <p>{request.url}</p>
-            <p>{request.method}</p>
-            <p>{request.requestId}</p>
-            {notarizedRequestIds.has(request.requestId) && (
-              <p className="ml-2 text-green-500">Notarized</p>
-            )}
-            {currentlyNotarizing === request.requestId && (
-              <p className="ml-2 text-yellow-500">Notarizing...</p>
-            )}
-            {!notarizedRequestIds.has(request.requestId) &&
-              currentlyNotarizing !== request.requestId && (
-                <p className="ml-2 text-blue-500">Queued</p>
+      <div className="flex-grow overflow-y-auto">
+        <div className="flex flex-col gap-2 p-4">
+          {allRequests.map((request, index) => (
+            <RequestItem
+              key={index}
+              request={request}
+              finalized={finalizedRequests.some(
+                (r) => r.requestId === request.requestId,
               )}
-          </div>
-        ))}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+const RequestItem: React.FC<{ request: any; finalized: boolean }> = ({
+  request,
+  finalized,
+}) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const requestUrl = urlify(request.url);
+
+  const onView = useCallback(() => {
+    chrome.runtime.sendMessage<any, string>({
+      type: BackgroundActiontype.verify_prove_request,
+      data: request,
+    });
+    navigate('/verify/' + request?.id);
+  }, [request]);
+
+  return (
+    <div className="truncate flex flex-row w-full py-1 px-4 flex-nowrap border-transparent shadow-md border-[2px] rounded-md p-2 hover:bg-gray-100 hover:border-gray-400 cursor-pointer transition-all duration-500 ease-in-out">
+      <div className="flex flex-col flex-nowrap flex-grow">
+        <div className="flex flex-row items-center text-xs">
+          <div className="bg-slate-200 text-slate-400 px-1 py-0.5 rounded-sm">
+            {request.method}
+          </div>
+          <div className="text-black font-bold px-2 py-1 rounded-md overflow-hidden text-ellipsis">
+            {requestUrl?.pathname}
+          </div>
+        </div>
+        <div className="flex flex-row">
+          <div className="font-bold text-slate-400">Host:</div>
+          <div className="ml-2 text-slate-800">{requestUrl?.host}</div>
+        </div>
+        <div className="flex flex-row">
+          <div className="font-bold text-slate-400">Notary API:</div>
+          <div className="ml-2 text-slate-800">{request.notaryUrl}</div>
+        </div>
+        <div className="flex flex-row">
+          <div className="font-bold text-slate-400">TLS Proxy API: </div>
+          <div className="ml-2 text-slate-800">{request.websocketProxyUrl}</div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        {finalized ? (
+          <>
+            <ActionButton
+              className="bg-slate-600 text-slate-200 hover:bg-slate-500 hover:text-slate-100"
+              onClick={onView}
+              fa="fa-solid fa-receipt"
+              ctaText="View Proof"
+            />
+          </>
+        ) : (
+          <button className="flex flex-row flex-grow-0 gap-2 self-end items-center justify-end px-2 py-1 bg-slate-100 text-slate-300 font-bold">
+            <span className="text-xs font-bold">Pending</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ActionButton: React.FC<{
+  onClick: () => void;
+  fa: string;
+  ctaText: string;
+  className?: string;
+}> = ({ onClick, fa, ctaText, className }) => {
+  return (
+    <button
+      className={classNames(
+        'flex flex-row flex-grow-0 gap-2 self-end items-center justify-end px-2 py-1 hover:font-bold',
+        className,
+      )}
+      onClick={onClick}
+    >
+      <i className={fa}></i>
+      <span className="text-xs font-bold">{ctaText}</span>
+    </button>
+  );
+};
+
+export default ExampleComponent;
