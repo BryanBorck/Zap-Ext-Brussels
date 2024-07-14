@@ -17,7 +17,7 @@ export default function ZapOptions(): ReactElement {
       urls.push('https://x.com/i/api/1.1/dm/user_updates.json');
     }
     if (instagramOn) {
-      urls.push('https://www.instagram.com/api/v1/web/fxcal/ig_sso_users/');
+      urls.push('https://www.instagram.com/ajax/bulk-route-definitions/');
     }
     if (discordOn) {
       urls.push('https://discord.com/api/v9/users/@me');

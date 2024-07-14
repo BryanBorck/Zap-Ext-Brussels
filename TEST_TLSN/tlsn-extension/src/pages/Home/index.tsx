@@ -100,9 +100,10 @@ export default function Home(): ReactElement {
         <div className="relative w-full h-[240px] flex flex-col items-center justify-center px-6 space-y-[10px]">
           <button
             onClick={() => navigate('/requests')}
-            className="w-full bg-lime-400 text-blue-900 font-bold py-1 mt-6 rounded-md shadow-lg border-[2px] border-transparent hover:bg-transparent hover:text-lime-500 hover:border-lime-500 transition-all duration-500 ease-in-out"
+            className="w-full flex flex-row space-x-2 items-center justify-center bg-lime-400 text-blue-900 font-bold py-1 mt-6 rounded-md shadow-lg border-[2px] border-transparent hover:bg-transparent hover:text-lime-500 hover:border-lime-500 transition-all duration-500 ease-in-out"
           >
-            Requests
+            <span>Requests</span>
+            <span>{`(${requests.length})`}</span>
           </button>
           <button
             onClick={() => navigate('/zap-options')}
@@ -111,7 +112,7 @@ export default function Home(): ReactElement {
             Settings
           </button>
           <button
-            onClick={() => navigate('/history')}
+            onClick={() => navigate('/zap')}
             className="w-full bg-lime-400 text-blue-900 font-bold py-1 mt-6 rounded-md shadow-lg border-[2px] border-transparent hover:bg-transparent hover:text-lime-500 hover:border-lime-500 transition-all duration-500 ease-in-out"
           >
             History
@@ -151,9 +152,9 @@ export default function Home(): ReactElement {
           <NavButton fa="fa-solid fa-gear" onClick={() => navigate('/options')}>
             Options
           </NavButton>*/}
-          <NavButton fa="fa-solid fa-check" onClick={() => navigate('/zap')}>
+          {/* <NavButton fa="fa-solid fa-check" onClick={() => navigate('/zap')}>
             Zap
-          </NavButton>
+          </NavButton> */}
         </div>
       </div>
       {/* <PluginList className="mx-4" /> */}
