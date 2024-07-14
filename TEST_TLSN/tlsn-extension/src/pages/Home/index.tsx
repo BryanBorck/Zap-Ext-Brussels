@@ -150,10 +150,10 @@ export default function Home(): ReactElement {
           </NavButton>
           <NavButton fa="fa-solid fa-gear" onClick={() => navigate('/options')}>
             Options
-          </NavButton>
+          </NavButton>*/}
           <NavButton fa="fa-solid fa-check" onClick={() => navigate('/zap')}>
             Zap
-          </NavButton> */}
+          </NavButton>
         </div>
       </div>
       {/* <PluginList className="mx-4" /> */}

@@ -5,6 +5,12 @@ import {
 import { useSelector } from 'react-redux';
 import { AppRootState } from './index';
 import deepEqual from 'fast-deep-equal';
+import { getDataFromBlockHash, submitDataToAvail } from '../utils/availUtils';
+import { hexToU8a } from '@polkadot/util';
+import { encryptData } from '../utils/cryptoUtils';
+// import { prove, set_logging_filter, verify } from 'tlsn-js';
+
+let encryptionKey = 'myconstantkey123456';
 
 enum ActionType {
   '/history/addRequest' = '/history/addRequest',
@@ -30,11 +36,39 @@ const initialState: State = {
   order: [],
 };
 
-export const addRequestHistory = (request?: RequestHistory | null) => {
-  console.log('Adding data to HISTORY');
-  console.log('Full Request', request);
+export const addRequestHistory = async (request?: any | null) => {
   if (request?.status == 'success') {
     console.log('Proof', request?.proof);
+    // let result = await verify(request?.proof);
+    // console.log('Verification Result', result);
+
+    try {
+      // Submit to Avail
+      console.log('Submitting Proof to Avail');
+      console.log('Full Request', JSON.stringify(request));
+
+      // let encryptedData = await encryptData(
+      //   JSON.stringify(request),
+      //   encryptionKey,
+      // );
+
+      let encryptedData = await encryptData(
+        JSON.stringify(request),
+        encryptionKey,
+      );
+
+      console.log('SUBMITTING DATA', encryptedData.toString());
+
+      const availResult = await submitDataToAvail(encryptedData.toString());
+
+      if (availResult) {
+        console.log('Submitted to Avail', availResult);
+      } else {
+        console.error('Failed to submit to Avail');
+      }
+    } catch (error) {
+      console.error('Error in encryption or Avail submission:', error);
+    }
   }
 
   return {
