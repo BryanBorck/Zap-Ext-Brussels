@@ -79,6 +79,10 @@ import { urlify } from '../../utils/misc';
     },
   );
 
+  server.on(ContentScriptTypes.get_zap, async () => {
+    return 'hello world';
+  });
+
   server.on(
     ContentScriptTypes.notarize,
     async (
