@@ -14,6 +14,7 @@ import PluginUploadInfo from '../../components/PluginInfo';
 import { ErrorModal } from '../../components/ErrorModal';
 import bkgPhoto from '../../assets/bkg_extension.png';
 import circlePoints from '../../assets/circle_points.png';
+import { useNotarize } from '../Zap/notarizeUtils';
 
 export default function Home(): ReactElement {
   const requests = useRequests();
@@ -42,6 +43,26 @@ export default function Home(): ReactElement {
     return () => clearInterval(interval);
   }, []);
 
+  const allRequests = useRequests() || [];
+  const { addRequestsToQueue, startQueueProcessing } = useNotarize();
+  const [finalizedRequests, setFinalizedRequests] = useState<any[]>([]);
+
+  const handleFinalize = (req: any) => {
+    setFinalizedRequests((prev) => [...prev, req]);
+  };
+
+  useEffect(() => {
+    addRequestsToQueue(allRequests);
+  }, [allRequests]);
+
+  useEffect(() => {
+    const clearProcessing = startQueueProcessing(allRequests, handleFinalize);
+
+    return () => {
+      clearProcessing();
+    };
+  }, [allRequests]);
+
   return (
     <div className="w-full flex flex-col min-h-screen overflow-y-auto bg-blue-midlight overflow-x-hidden relative bg-bluemidlight">
       <div className="absolute inset-0 z-0">
@@ -62,20 +83,21 @@ export default function Home(): ReactElement {
         <div className="relative w-full h-[250px] flex flex-col items-center justify-center">
           <div
             className={`absolute h-[260] w-[260] ${
-              isSpinning ? 'animate-spin-slow' : ''
-            } hover:scale-110 transition-transform z-20`}
+              isSpinning ? 'animate-spin-slow' : 'hover:scale-110'
+            } transition-transform z-20`}
           >
             <img src={circlePoints} alt="" className="h-full w-full" />
           </div>
-          <h1 className="absolute h-[260] w-[260] flex flex-col items-center justify-center text-5xl font-bold text-center text-white hover:scale-110 transition-transform duration-500">
-            {count}
-          </h1>
-          <div className="absolute -bottom-[20px] w-full px-8 flex flex-col items-center text-sm text-gray-400">
+          <div className="absolute h-[260] w-[260] flex flex-col items-center justify-center text-center text-white hover:scale-110 transition-transform duration-500">
+            <h1 className="text-5xl font-bold">{count}</h1>
+            <p className="text-md">Data Points</p>
+          </div>
+          <div className="absolute -bottom-[30px] w-full px-8 flex flex-col items-center text-sm text-gray-400">
             You are doing great! Keep allowing access to open tabs and earn more
             points.
           </div>
         </div>
-        <div className="relative w-full h-[180px] flex flex-col items-center justify-center px-6 space-y-[10px]">
+        <div className="relative w-full h-[240px] flex flex-col items-center justify-center px-6 space-y-[10px]">
           <button
             onClick={() => navigate('/requests')}
             className="w-full bg-lime-400 text-blue-900 font-bold py-1 mt-6 rounded-md shadow-lg border-[2px] border-transparent hover:bg-transparent hover:text-lime-500 hover:border-lime-500 transition-all duration-500 ease-in-out"
@@ -94,6 +116,12 @@ export default function Home(): ReactElement {
           >
             History
           </button>
+          {/* <button
+            onClick={() => navigate('/zap')}
+            className="w-full bg-lime-400 text-blue-900 font-bold py-1 mt-6 rounded-md shadow-lg border-[2px] border-transparent hover:bg-transparent hover:text-lime-500 hover:border-lime-500 transition-all duration-500 ease-in-out"
+          >
+            Zap
+          </button> */}
           {/* <NavButton
             fa="fa-solid fa-table"
             onClick={() => navigate('/requests')}
