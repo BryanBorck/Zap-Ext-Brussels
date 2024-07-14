@@ -1,5 +1,5 @@
 import React, { ReactElement, ReactNode } from 'react';
-import logo from '../../assets/img/icon-128.png';
+import logo from '../../assets/zap_logo.png';
 
 export function BaseApproval({
   onSecondaryClick,

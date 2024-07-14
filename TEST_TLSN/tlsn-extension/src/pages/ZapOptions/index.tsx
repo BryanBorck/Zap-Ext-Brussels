@@ -7,6 +7,7 @@ import bkgPhoto from '../../assets/bkg_extension.png';
 export default function ZapOptions(): ReactElement {
   const [twitterOn, setTwitterOn] = useState<boolean>(false);
   const [instagramOn, setInstagramOn] = useState<boolean>(false);
+  const [discordOn, setDiscordOn] = useState<boolean>(false);
   const [gmailOn, setGmailOn] = useState<boolean>(false);
   const [chatgptOn, setChatgptOn] = useState<boolean>(false);
 
@@ -17,6 +18,9 @@ export default function ZapOptions(): ReactElement {
     }
     if (instagramOn) {
       urls.push('https://www.instagram.com/api/v1/web/fxcal/ig_sso_users/');
+    }
+    if (discordOn) {
+      urls.push('https://discord.com/api/v9/users/@me');
     }
     if (gmailOn) {
       urls.push('https://mail.google.com/sync/u/0/i/fd\\S+');
@@ -41,9 +45,12 @@ export default function ZapOptions(): ReactElement {
         setInstagramOn(state);
         break;
       case 2:
-        setGmailOn(state);
+        setDiscordOn(state);
         break;
       case 3:
+        setGmailOn(state);
+        break;
+      case 4:
         setChatgptOn(state);
         break;
       default:
@@ -79,10 +86,14 @@ export default function ZapOptions(): ReactElement {
           </div>
           <div className="flex flex-row space-x-4 items-center">
             <Toggle index={2} onToggle={handleToggle} />
-            <p className="text-lg">Gmail</p>
+            <p className="text-lg">Discord</p>
           </div>
           <div className="flex flex-row space-x-4 items-center">
             <Toggle index={3} onToggle={handleToggle} />
+            <p className="text-lg">Gmail</p>
+          </div>
+          <div className="flex flex-row space-x-4 items-center">
+            <Toggle index={4} onToggle={handleToggle} />
             <p className="text-lg">Chatgpt</p>
           </div>
         </div>

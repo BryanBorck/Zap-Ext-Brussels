@@ -79,21 +79,53 @@ import { urlify } from '../../utils/misc';
     },
   );
 
-  server.on(ContentScriptTypes.get_zap, async (request: ContentScriptRequest<{ url: string }  >   ) => {
-    const { url } = request.params || {};
+  server.on(
+    ContentScriptTypes.get_zap,
+    async (request: ContentScriptRequest<{ url: string }>) => {
+      const { url } = request.params || {};
 
-    if(!url) throw new Error('params must include url.');
+      if (!url) throw new Error('params must include url.');
 
-    const zap = await browser.runtime.sendMessage({
-      type: BackgroundActiontype.get_zap_request,
-      data: {
-        ...getPopupData(),
-        url,
-      },
-    });
+      const zap = await browser.runtime.sendMessage({
+        type: BackgroundActiontype.get_zap_request,
+        data: {
+          ...getPopupData(),
+          url,
+        },
+      });
 
-    return zap;
-  });
+      return zap;
+    },
+  );
+
+  server.on(
+    ContentScriptTypes.mint_attestation,
+    async (
+      request: ContentScriptRequest<{
+        txHash: string;
+        blockHash: string;
+        decrypted: string;
+      }>,
+    ) => {
+      const { txHash, blockHash, decrypted } = request.params || {};
+
+      if (!txHash) throw new Error('params must include txHash.');
+      if (!blockHash) throw new Error('params must include blockHash.');
+      if (!decrypted) throw new Error('params must include decrypted.');
+
+      const attestation = await browser.runtime.sendMessage({
+        type: BackgroundActiontype.mint_attestation_request,
+        data: {
+          ...getPopupData(),
+          txHash,
+          blockHash,
+          decrypted,
+        },
+      });
+
+      return attestation;
+    },
+  );
 
   server.on(
     ContentScriptTypes.notarize,

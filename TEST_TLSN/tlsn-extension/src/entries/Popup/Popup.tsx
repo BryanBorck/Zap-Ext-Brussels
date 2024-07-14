@@ -31,6 +31,7 @@ import { GetPluginsApproval } from '../../pages/GetPluginsApproval';
 import { RunPluginApproval } from '../../pages/RunPluginApproval';
 import Zap from '../../pages/Zap';
 import { GetZapApproval } from '../../pages/GetZapApproval';
+import { MintAttestationApproval } from '../../pages/MintAttestationApproval';
 // import Zap from '../../pages/Zap';
 
 const Popup = () => {
@@ -121,6 +122,10 @@ const Popup = () => {
         <Route path="/get-history-approval" element={<GetHistoryApproval />} />
         <Route path="/get-proof-approval" element={<GetProofApproval />} />
         <Route path="/get-zap-approval" element={<GetZapApproval />} />
+        <Route
+          path="/mint-attestation-approval"
+          element={<MintAttestationApproval />}
+        />
         <Route path="/notarize-approval" element={<NotarizeApproval />} />
         <Route path="/get-plugins-approval" element={<GetPluginsApproval />} />
         <Route path="/run-plugin-approval" element={<RunPluginApproval />} />
