@@ -27,6 +27,14 @@ class TLSN {
     return resp || [];
   }
 
+  async getZao(id: string): Promise<Proof | null> {
+    const resp = await client.call(ContentScriptTypes.get_zap, {
+      id,
+    });
+
+    return resp || null;
+  }
+
   async getProof(id: string): Promise<Proof | null> {
     const resp = await client.call(ContentScriptTypes.get_proof, {
       id,
