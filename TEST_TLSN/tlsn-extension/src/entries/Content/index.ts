@@ -79,8 +79,20 @@ import { urlify } from '../../utils/misc';
     },
   );
 
-  server.on(ContentScriptTypes.get_zap, async () => {
-    return 'hello world';
+  server.on(ContentScriptTypes.get_zap, async (request: ContentScriptRequest<{ url: string }  >   ) => {
+    const { url } = request.params || {};
+
+    if(!url) throw new Error('params must include url.');
+
+    const zap = await browser.runtime.sendMessage({
+      type: BackgroundActiontype.get_zap_request,
+      data: {
+        ...getPopupData(),
+        url,
+      },
+    });
+
+    return zap;
   });
 
   server.on(

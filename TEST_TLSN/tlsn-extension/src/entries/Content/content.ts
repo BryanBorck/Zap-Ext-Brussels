@@ -27,10 +27,10 @@ class TLSN {
     return resp || [];
   }
 
-  async getZap(): Promise<string> {
-    const resp = await client.call(ContentScriptTypes.get_zap);
+  async getZap(url: string): Promise< { txHash: string, blockHash: string } > {
+    const resp = await client.call(ContentScriptTypes.get_zap, { url });
 
-    return resp;
+    return resp || { txHash: '', blockHash: '' };
   }
 
   async getProof(id: string): Promise<Proof | null> {
