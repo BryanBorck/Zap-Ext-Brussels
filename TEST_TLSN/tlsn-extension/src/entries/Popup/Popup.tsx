@@ -30,6 +30,7 @@ import { InstallPluginApproval } from '../../pages/InstallPluginApproval';
 import { GetPluginsApproval } from '../../pages/GetPluginsApproval';
 import { RunPluginApproval } from '../../pages/RunPluginApproval';
 import Zap from '../../pages/Zap';
+import { GetZapApproval } from '../../pages/GetZapApproval';
 // import Zap from '../../pages/Zap';
 
 const Popup = () => {
@@ -119,6 +120,7 @@ const Popup = () => {
         <Route path="/connection-approval" element={<ConnectionApproval />} />
         <Route path="/get-history-approval" element={<GetHistoryApproval />} />
         <Route path="/get-proof-approval" element={<GetProofApproval />} />
+        <Route path="/get-zap-approval" element={<GetZapApproval />} />
         <Route path="/notarize-approval" element={<NotarizeApproval />} />
         <Route path="/get-plugins-approval" element={<GetPluginsApproval />} />
         <Route path="/run-plugin-approval" element={<RunPluginApproval />} />
