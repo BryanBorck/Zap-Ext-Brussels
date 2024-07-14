@@ -6,8 +6,7 @@ import { addRequest } from '../../reducers/requests';
 import { urlify } from '../../utils/misc';
 import { setCookies, setHeaders } from './db';
 import { getList, URL_PATTERNS_LS_KEY } from '../../utils/storage';
-
-// DANILO: Aqui ele basicamente seta os requests no cache e envia no log de requests
+// import { addRequestsToQueue, startQueueProcessing } from './notarizeUtils';
 
 // const urlPatternStrings: string[] = [
 //   'https://chatgpt.com/backend-api/conversation/\\S+',
@@ -21,59 +20,54 @@ export const onSendHeaders = (
   return mutex.runExclusive(async () => {
     const { method, tabId, requestId } = details;
 
-    if (method !== 'OPTIONS') {
-      const cache = getGlobalCache();
-      const existing = cache.get<RequestLog>(requestId);
-      const { hostname } = urlify(details.url) || {};
+    const cache = getGlobalCache();
+    const existing = cache.get<RequestLog>(requestId);
+    const { hostname } = urlify(details.url) || {};
 
-      const urlPatternStrings = await getList(URL_PATTERNS_LS_KEY);
+    const urlPatternStrings = await getList(URL_PATTERNS_LS_KEY);
 
-      const urlPatterns: RegExp[] = urlPatternStrings.map(
-        (pattern: any) => new RegExp(pattern),
-      );
+    const urlPatterns: RegExp[] = urlPatternStrings.map(
+      (pattern: any) => new RegExp(pattern),
+    );
 
-      function isUrlMatching(url: string, patterns: RegExp[]): boolean {
-        return patterns.some((pattern) => pattern.test(url));
-      }
+    function isUrlMatching(url: string, patterns: RegExp[]): boolean {
+      return patterns.some((pattern) => pattern.test(url));
+    }
 
-      // const twitterTestRegex = new RegExp(
-      //   'https://x.com/i/api/1.1/dm/user_updates.json',
-      // );
+    const twitterTestRegex = new RegExp(
+      'https://x.com/i/api/1.1/dm/user_updates.json',
+    );
 
-      if (isUrlMatching(details.url, urlPatterns)) {
-        // DANILO: setar no cache apenas os request com a Regex do Twitter
-
-        console.log('Twitter DM Request', details);
-
-        if (hostname && details.requestHeaders) {
-          details.requestHeaders.forEach((header) => {
-            const { name, value } = header;
-            if (/^cookie$/i.test(name) && value) {
-              value
-                .split(';')
-                .map((v) => v.split('='))
-                .forEach((cookie) => {
-                  setCookies(hostname, cookie[0].trim(), cookie[1]);
-                });
-            } else {
-              setHeaders(hostname, name, value);
-            }
-          });
-        }
-
-        cache.set(requestId, {
-          ...existing,
-          method: details.method as 'GET' | 'POST',
-          type: details.type,
-          url: details.url,
-          initiator: details.initiator || null,
-          requestHeaders: details.requestHeaders || [],
-          tabId: tabId,
-          requestId: requestId,
-        });
-      } else {
-        console.log('Not matching', details.url);
-      }
+    if (isUrlMatching(details.url, urlPatterns)) {
+      // DANILO: setar no cache apenas os request com a Regex do Twitter
+      // console.log('Twitter DM Request', details);
+      // if (hostname && details.requestHeaders) {
+      //   details.requestHeaders.forEach((header) => {
+      //     const { name, value } = header;
+      //     if (/^cookie$/i.test(name) && value) {
+      //       value
+      //         .split(';')
+      //         .map((v) => v.split('='))
+      //         .forEach((cookie) => {
+      //           setCookies(hostname, cookie[0].trim(), cookie[1]);
+      //         });
+      //     } else {
+      //       setHeaders(hostname, name, value);
+      //     }
+      //   });
+      // }
+      // const newLog: RequestLog = {
+      //   ...existing,
+      //   method: details.method as 'GET' | 'POST',
+      //   type: details.type,
+      //   url: details.url,
+      //   initiator: details.initiator || null,
+      //   requestHeaders: details.requestHeaders || [],
+      //   tabId: tabId,
+      //   requestId: requestId,
+      // });
+    } else {
+      console.log('Not matching', details.url);
     }
   });
 };

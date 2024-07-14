@@ -73,6 +73,7 @@ export default function Zap(): ReactElement {
         await dispatch(
           // @ts-ignore
           notarizeRequest({
+            id: req.requestId, // Add the 'id' property
             url: req.url,
             method: req.method,
             headers,
