@@ -20,6 +20,7 @@
     "@fortawesome/fontawesome-free": "^6.4.2",
     "async-mutex": "^0.4.0",
     "avail-js-sdk": "^0.2.12",
+    "axios": "^1.7.2",
     "buffer": "^6.0.3",
     "charwise": "^3.0.1",
     "classnames": "^2.3.2",
