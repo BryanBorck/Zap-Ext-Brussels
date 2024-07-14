@@ -8,6 +8,7 @@ import deepEqual from 'fast-deep-equal';
 import { getDataFromBlockHash, submitDataToAvail } from '../utils/availUtils';
 import { hexToU8a } from '@polkadot/util';
 import { encryptData } from '../utils/cryptoUtils';
+// import { prove, set_logging_filter, verify } from 'tlsn-js';
 
 let encryptionKey = 'myconstantkey123456';
 
@@ -38,6 +39,9 @@ const initialState: State = {
 export const addRequestHistory = async (request?: any | null) => {
   if (request?.status == 'success') {
     console.log('Proof', request?.proof);
+    // let result = await verify(request?.proof);
+    // console.log('Verification Result', result);
+
     try {
       // Submit to Avail
       console.log('Submitting Proof to Avail');
