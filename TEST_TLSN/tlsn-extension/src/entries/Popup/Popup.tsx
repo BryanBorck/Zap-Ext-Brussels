@@ -12,12 +12,13 @@ import Requests from '../../pages/Requests';
 import Options from '../../pages/Options';
 import Request from '../../pages/Requests/Request';
 import Home from '../../pages/Home';
-import logo from '../../assets/img/icon-128.png';
+import logo from '../../assets/logo.png';
 import RequestBuilder from '../../pages/RequestBuilder';
 import Notarize from '../../pages/Notarize';
 import ProofViewer from '../../pages/ProofViewer';
 import History from '../../pages/History';
 import ProofUploader from '../../pages/ProofUploader';
+import ZapOptions from '../../pages/ZapOptions';
 import browser from 'webextension-polyfill';
 import store from '../../utils/store';
 import PluginUploadInfo from '../../components/PluginInfo';
@@ -28,7 +29,7 @@ import { NotarizeApproval } from '../../pages/NotarizeApproval';
 import { InstallPluginApproval } from '../../pages/InstallPluginApproval';
 import { GetPluginsApproval } from '../../pages/GetPluginsApproval';
 import { RunPluginApproval } from '../../pages/RunPluginApproval';
-import Zap from '../../pages/Zap';
+// import Zap from '../../pages/Zap';
 
 const Popup = () => {
   const dispatch = useDispatch();
@@ -83,9 +84,9 @@ const Popup = () => {
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden">
-      <div className="flex flex-nowrap flex-shrink-0 flex-row items-center relative gap-2 h-9 p-2 cursor-default justify-center bg-slate-300 w-full">
+      <div className="flex flex-nowrap flex-shrink-0 flex-row items-center relative gap-2 h-9 p-2 cursor-default justify-center bg-bluemiddark w-full">
         <img
-          className="absolute left-2 h-5 cursor-pointer"
+          className="absolute left-4 top-4 h-5 cursor-pointer"
           src={logo}
           alt="logo"
           onClick={() => navigate('/')}
@@ -98,7 +99,7 @@ const Popup = () => {
               alt="logo"
             />
           )}
-          <div className="text-xs">{url?.hostname}</div>
+          <div className="text-xs text-white">{url?.hostname}</div>
         </div>
       </div>
       <Routes>
@@ -111,7 +112,7 @@ const Popup = () => {
         <Route path="/custom/*" element={<RequestBuilder />} />
         <Route path="/options" element={<Options />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/zap" element={<Zap />} />
+        <Route path="/zap-options" element={<ZapOptions />} />
         <Route path="/plugininfo" element={<PluginUploadInfo />} />
         <Route path="/connection-approval" element={<ConnectionApproval />} />
         <Route path="/get-history-approval" element={<GetHistoryApproval />} />

@@ -5,6 +5,8 @@ export const PROXY_API_LS_KEY = 'proxy-api';
 export const MAX_SENT_LS_KEY = 'max-sent';
 export const MAX_RECEIVED_LS_KEY = 'max-received';
 export const LOGGING_FILTER_KEY = 'logging-filter';
+export const URL_PATTERNS_LS_KEY = 'url-patterns';
+export const TOGGLE_STATE_LS_KEY = 'toggle-state';
 
 export async function set(key: string, value: string) {
   return chrome.storage.sync.set({ [key]: value });
@@ -15,6 +17,20 @@ export async function get(key: string, defaultValue?: string) {
     .get(key)
     .then((json: any) => json[key] || defaultValue)
     .catch(() => '');
+}
+
+export async function setList(key: string, list: any[]) {
+  return set(key, JSON.stringify(list));
+}
+
+export async function getList(key: string, defaultValue: any[] = []) {
+  return get(key).then((value) => {
+    try {
+      return value ? JSON.parse(value) : defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  });
 }
 
 export async function getMaxSent() {

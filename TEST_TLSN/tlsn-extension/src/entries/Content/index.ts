@@ -7,6 +7,14 @@ import { urlify } from '../../utils/misc';
   loadScript('content.bundle.js');
   const server = new RPCServer();
 
+  server.on(
+    ContentScriptTypes.get_zap,
+    // return hello world
+    async () => {
+      return 'hello world';
+    },
+  );
+
   server.on(ContentScriptTypes.connect, async () => {
     const connected = await browser.runtime.sendMessage({
       type: BackgroundActiontype.connect_request,

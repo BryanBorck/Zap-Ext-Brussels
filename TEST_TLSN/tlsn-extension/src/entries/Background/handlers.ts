@@ -5,8 +5,15 @@ import browser from 'webextension-polyfill';
 import { addRequest } from '../../reducers/requests';
 import { urlify } from '../../utils/misc';
 import { setCookies, setHeaders } from './db';
+import { getList, URL_PATTERNS_LS_KEY } from '../../utils/storage';
 
 // DANILO: Aqui ele basicamente seta os requests no cache e envia no log de requests
+
+// const urlPatternStrings: string[] = [
+//   'https://chatgpt.com/backend-api/conversation/\\S+',
+//   'https://chatgpt.com/backend-api/conversations\\S+',
+//   'https://x.com/i/api/1.1/dm/user_updates.json',
+// ];
 
 export const onSendHeaders = (
   details: browser.WebRequest.OnSendHeadersDetailsType,
@@ -19,11 +26,21 @@ export const onSendHeaders = (
       const existing = cache.get<RequestLog>(requestId);
       const { hostname } = urlify(details.url) || {};
 
-      const twitterTestRegex = new RegExp(
-        'https://x.com/i/api/1.1/dm/user_updates.json',
+      const urlPatternStrings = await getList(URL_PATTERNS_LS_KEY);
+
+      const urlPatterns: RegExp[] = urlPatternStrings.map(
+        (pattern: any) => new RegExp(pattern),
       );
 
-      if (twitterTestRegex.test(details.url)) {
+      function isUrlMatching(url: string, patterns: RegExp[]): boolean {
+        return patterns.some((pattern) => pattern.test(url));
+      }
+
+      // const twitterTestRegex = new RegExp(
+      //   'https://x.com/i/api/1.1/dm/user_updates.json',
+      // );
+
+      if (isUrlMatching(details.url, urlPatterns)) {
         // DANILO: setar no cache apenas os request com a Regex do Twitter
 
         console.log('Twitter DM Request', details);
@@ -54,6 +71,8 @@ export const onSendHeaders = (
           tabId: tabId,
           requestId: requestId,
         });
+      } else {
+        console.log('Not matching', details.url);
       }
     }
   });
@@ -104,11 +123,21 @@ export const onResponseStarted = (
 
     const existing = cache.get<RequestLog>(requestId);
 
-    const twitterTestRegex = new RegExp(
-      'https://x.com/i/api/1.1/dm/user_updates.json',
+    // const twitterTestRegex = new RegExp(
+    //   'https://x.com/i/api/1.1/dm/user_updates.json',
+    // );
+
+    const urlPatternStrings = await getList(URL_PATTERNS_LS_KEY);
+
+    const urlPatterns: RegExp[] = urlPatternStrings.map(
+      (pattern: any) => new RegExp(pattern),
     );
 
-    if (twitterTestRegex.test(details.url)) {
+    function isUrlMatching(url: string, patterns: RegExp[]): boolean {
+      return patterns.some((pattern) => pattern.test(url));
+    }
+
+    if (isUrlMatching(details.url, urlPatterns)) {
       // DANILO: setar no cache apenas os request com a Regex do Twitter
 
       const newLog: RequestLog = {
@@ -133,6 +162,8 @@ export const onResponseStarted = (
         },
         action: addRequest(newLog),
       });
+    } else {
+      console.log('Not matching', details.url);
     }
   });
 };
